@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily URLs – Flork Mood Panel</title>
+    <meta name="description" content="Tu panel personal de links organizados por mood, con temática Flork.">
+    <link href="https://fonts.googleapis.com/css2?family=Gochi+Hand&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        /* ===== TOKENS ===== */
+        :root {
+            --panel-bg: rgba(255,255,255,0.82);
+            --border: #1a1a1a;
+            --shadow: 10px 10px 0 rgba(0,0,0,0.10);
+            --radius-sketch: 255px 15px 225px 15px / 15px 225px 15px 255px;
+            --font-hand: 'Gochi Hand', cursive;
+            --font-ui: 'Inter', sans-serif;
+            --transition: 0.35s ease;
+
+            /* Mood gradients */
+            --grad-work:  linear-gradient(135deg, #ffd6d6 0%, #ffc4c4 40%, #ffb3ba 100%);
+            --grad-relax: linear-gradient(135deg, #c9e8ff 0%, #b8d9f5 40%, #a8c8f0 100%);
+            --grad-study: linear-gradient(135deg, #e8d5f5 0%, #d9c4f0 40%, #cdb4e8 100%);
+            --grad-libre: linear-gradient(135deg, #c5e8cc 0%, #b2ddb8 40%, #9ed4a4 100%);
+
+            /* Accent per mood */
+            --accent-work:  #e05c6a;
+            --accent-relax: #3a8fc7;
+            --accent-study: #8a52c8;
+            --accent-libre: #3a9e5c;
+
+            --current-grad:  var(--grad-work);
+            --current-accent: var(--accent-work);
+        }
+
+        body.mood-work  { --current-grad: var(--grad-work);  --current-accent: var(--accent-work); }
+        body.mood-relax { --current-grad: var(--grad-relax); --current-accent: var(--accent-relax); }
+        body.mood-study { --current-grad: var(--grad-study); --current-accent: var(--accent-study); }
+        body.mood-libre { --current-grad: var(--grad-libre); --current-accent: var(--accent-libre); }
+
+        /* ===== RESET & BASE ===== */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font-hand);
+            background: var(--current-grad);
+            transition: background var(--transition);
+            min-height: 100vh;
+            padding: 24px 16px 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+        }
+
+        /* Animated background blobs */
+        body::before, body::after {
+            content: '';
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.35;
+            pointer-events: none;
+            z-index: 0;
+            transition: background var(--transition);
+        }
+        body::before {
+            width: 420px; height: 420px;
+            top: -100px; right: -100px;
+            background: var(--current-accent);
+            animation: floatBlob1 8s ease-in-out infinite alternate;
+        }
+        body::after {
+            width: 320px; height: 320px;
+            bottom: -80px; left: -80px;
+            background: var(--current-accent);
+            animation: floatBlob2 10s ease-in-out infinite alternate;
+        }
+        @keyframes floatBlob1 { from { transform: translate(0,0) scale(1); } to { transform: translate(30px, 20px) scale(1.08); } }
+        @keyframes floatBlob2 { from { transform: translate(0,0) scale(1); } to { transform: translate(-20px, -30px) scale(1.06); } }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            height: 100%; width: 0;
+            position: fixed; z-index: 100;
+            top: 0; left: 0;
+            background: rgba(15,15,15,0.97);
+            backdrop-filter: blur(12px);
+            color: white;
+            overflow: hidden;
+            transition: width 0.4s cubic-bezier(.77,0,.18,1);
+            padding-top: 70px;
+            box-shadow: 4px 0 30px rgba(0,0,0,0.3);
+        }
+        .sidebar.open { width: 260px; }
+
+        .sidebar .closebtn {
+            position: absolute; top: 15px; right: 20px;
+            font-size: 28px; cursor: pointer;
+            background: none; border: none; color: #999;
+            font-family: var(--font-ui);
+            transition: color 0.2s;
+        }
+        .sidebar .closebtn:hover { color: #fff; }
+
+        .sidebar h2 {
+            font-family: var(--font-hand);
+            font-size: 1.4rem;
+            padding: 0 25px 20px;
+            border-bottom: 1px solid #333;
+            margin-bottom: 10px;
+        }
+
+        .sidebar-link {
+            display: flex; align-items: center; gap: 12px;
+            padding: 14px 25px;
+            color: #999; font-size: 1rem;
+            font-family: var(--font-hand);
+            text-decoration: none; cursor: pointer;
+            background: none; border: none; width: 100%;
+            text-align: left;
+            transition: color 0.2s, background 0.2s;
+            white-space: nowrap;
+        }
+        .sidebar-link:hover { color: #fff; background: rgba(255,255,255,0.05); }
+        .sidebar-link .icon { font-size: 1.2rem; width: 22px; text-align: center; }
+
+        /* Overlay */
+        .overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.3); z-index: 99;
+            backdrop-filter: blur(2px);
+        }
+        .overlay.active { display: block; }
+
+        /* ===== HEADER ===== */
+        header {
+            position: relative; z-index: 1;
+            width: 100%; max-width: 620px;
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .btn-hamburger {
+            font-size: 26px; cursor: pointer;
+            width: 46px; height: 46px;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(255,255,255,0.6);
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sketch);
+            transition: transform 0.15s, background 0.2s;
+            backdrop-filter: blur(8px);
+        }
+        .btn-hamburger:hover { transform: scale(1.08); background: rgba(255,255,255,0.9); }
+
+        h1 {
+            font-size: 2.4rem;
+            letter-spacing: -0.5px;
+            text-shadow: 3px 3px 0 rgba(0,0,0,0.08);
+        }
+
+        /* ===== PANEL ===== */
+        .panel-container {
+            position: relative; z-index: 1;
+            background: var(--panel-bg);
+            border: 3px solid var(--border);
+            border-radius: var(--radius-sketch);
+            width: 100%; max-width: 620px;
+            padding: 32px 28px 24px;
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(12px);
+            transition: box-shadow 0.2s;
+        }
+        .panel-container:hover { box-shadow: 14px 14px 0 rgba(0,0,0,0.12); }
+
+        .panel-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 20px;
+        }
+        .panel-title {
+            font-size: 1.1rem; color: #888;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+        .link-counter {
+            font-family: var(--font-ui);
+            font-size: 0.75rem; font-weight: 600;
+            background: var(--current-accent);
+            color: white;
+            padding: 3px 10px;
+            border-radius: 20px;
+            transition: background var(--transition);
+            white-space: nowrap;
+        }
+
+        /* ===== LINK LIST ===== */
+        .lista-links { display: flex; flex-direction: column; gap: 10px; min-height: 40px; }
+
+        .item-link {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 12px;
+            border: 2px dashed #ddd;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.6);
+            transition: border-color 0.2s, box-shadow 0.2s, opacity 0.2s, transform 0.15s;
+            cursor: grab;
+            animation: slideIn 0.25s ease;
+        }
+        .item-link:active { cursor: grabbing; }
+        .item-link:hover { border-color: #aaa; box-shadow: 3px 3px 0 rgba(0,0,0,0.06); }
+        .item-link.dragging { opacity: 0.45; transform: scale(0.98); }
+        .item-link.drag-over { border-color: var(--current-accent); border-style: solid; }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .drag-handle {
+            color: #ccc; font-size: 1rem; cursor: grab; flex-shrink: 0;
+            padding: 0 2px; user-select: none;
+            transition: color 0.2s;
+        }
+        .item-link:hover .drag-handle { color: #888; }
+
+        input[type="checkbox"] {
+            flex-shrink: 0;
+            width: 18px; height: 18px;
+            accent-color: var(--current-accent);
+            cursor: pointer;
+            transition: accent-color var(--transition);
+        }
+
+        .input-doodle {
+            font-family: var(--font-hand);
+            font-size: 1.05rem;
+            border: none;
+            border-bottom: 2px solid transparent;
+            outline: none;
+            padding: 2px 4px;
+            background: transparent;
+            transition: border-color 0.2s;
+            min-width: 0;
+        }
+        .input-doodle:focus { border-bottom-color: var(--current-accent); }
+        .input-titulo { width: 28%; font-weight: bold; flex-shrink: 0; }
+        .input-url    { flex: 1; color: #666; }
+
+        .item-actions { display: flex; gap: 4px; margin-left: auto; flex-shrink: 0; }
+
+        .btn-icon {
+            background: none; border: none; cursor: pointer;
+            font-size: 1rem; opacity: 0.45;
+            padding: 4px; border-radius: 6px;
+            transition: opacity 0.2s, background 0.2s, transform 0.15s;
+        }
+        .btn-icon:hover { opacity: 1; background: rgba(0,0,0,0.06); }
+        .btn-icon:active { transform: scale(0.9); }
+        .btn-open-single { font-size: 0.9rem; }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center; padding: 30px 0;
+            color: #bbb; font-size: 1.1rem;
+            animation: fadeIn 0.4s ease;
+        }
+        .empty-state .big-emoji { font-size: 3rem; display: block; margin-bottom: 8px; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* ===== BOTTOM CONTROLS ===== */
+        .controles-inferiores {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-top: 20px; gap: 10px; flex-wrap: wrap;
+        }
+
+        .btn-main {
+            font-family: var(--font-hand);
+            font-size: 1.15rem;
+            padding: 9px 18px;
+            cursor: pointer;
+            border: 2.5px solid var(--border);
+            background: #fff;
+            border-radius: var(--radius-sketch);
+            transition: transform 0.1s, box-shadow 0.15s, background 0.2s;
+            white-space: nowrap;
+        }
+        .btn-main:hover { box-shadow: 4px 4px 0 rgba(0,0,0,0.13); transform: translateY(-1px); }
+        .btn-main:active { transform: scale(0.95) translateY(0); box-shadow: none; }
+
+        .btn-open {
+            background: var(--current-accent);
+            border-color: var(--current-accent);
+            color: white;
+            transition: background var(--transition), border-color var(--transition),
+                        transform 0.1s, box-shadow 0.15s;
+        }
+        .btn-open:hover { filter: brightness(1.1); }
+
+        /* ===== MOOD SELECTOR ===== */
+        .mood-selector {
+            position: relative; z-index: 1;
+            display: flex; gap: 20px;
+            margin-top: 40px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .mood-card {
+            text-align: center; cursor: pointer;
+            transition: transform 0.25s cubic-bezier(.34,1.56,.64,1), opacity 0.2s;
+            width: 92px;
+        }
+        .mood-card:not(.active) { opacity: 0.65; }
+        .mood-card.active { opacity: 1; }
+        .mood-card:hover { transform: translateY(-10px) scale(1.05) !important; opacity: 1 !important; }
+        .mood-card.active { transform: translateY(-6px) scale(1.04); }
+
+        .mood-card-img-wrap {
+            border: 3px solid transparent;
+            border-radius: 14px;
+            overflow: hidden;
+            width: 92px; height: 92px;
+            transition: border-color 0.25s, box-shadow 0.25s;
+            background: rgba(255,255,255,0.7);
+        }
+        .mood-card.active .mood-card-img-wrap {
+            border-color: var(--current-accent);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+        .mood-card img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .mood-card p {
+            margin-top: 7px; font-size: 1.1rem;
+            transition: color 0.25s;
+        }
+        .mood-card.active p { color: var(--current-accent); font-size: 1.15rem; }
+
+        /* ===== TOAST ===== */
+        #toast-container {
+            position: fixed; bottom: 30px; right: 24px;
+            z-index: 999; display: flex; flex-direction: column; gap: 10px;
+        }
+        .toast {
+            font-family: var(--font-ui); font-size: 0.9rem; font-weight: 600;
+            padding: 12px 20px;
+            background: #1a1a1a; color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+            animation: toastIn 0.35s cubic-bezier(.34,1.56,.64,1) forwards;
+            max-width: 280px;
+        }
+        .toast.out { animation: toastOut 0.3s ease forwards; }
+        .toast.success { background: #2a7a4e; }
+        .toast.warning { background: #b86b00; }
+        .toast.error   { background: #b82a2a; }
+        @keyframes toastIn  { from { opacity:0; transform: translateX(40px) scale(0.9); } to { opacity:1; transform: translateX(0) scale(1); } }
+        @keyframes toastOut { from { opacity:1; transform: translateX(0) scale(1); }     to { opacity:0; transform: translateX(40px) scale(0.9); } }
+
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 10px; }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 480px) {
+            h1 { font-size: 1.9rem; }
+            .panel-container { padding: 20px 16px 18px; }
+            .input-titulo { width: 25%; }
+            .btn-main { font-size: 1rem; padding: 8px 14px; }
+            .mood-card { width: 75px; }
+            .mood-card-img-wrap { width: 75px; height: 75px; }
+        }
+    </style>
+</head>
+<body class="mood-work">
+
+    <!-- Overlay -->
+    <div class="overlay" id="overlay" onclick="toggleNav()"></div>
+
+    <!-- Sidebar -->
+    <div id="mySidebar" class="sidebar">
+        <button class="closebtn" onclick="toggleNav()" aria-label="Cerrar menú">✕</button>
+        <h2>⚙️ Configuración</h2>
+        <button class="sidebar-link" onclick="exportarLinks()">
+            <span class="icon">📋</span> Exportar Links
+        </button>
+        <button class="sidebar-link" onclick="seleccionarTodos()">
+            <span class="icon">✅</span> Seleccionar Todo
+        </button>
+        <button class="sidebar-link" onclick="deseleccionarTodos()">
+            <span class="icon">⬜</span> Deseleccionar Todo
+        </button>
+        <button class="sidebar-link" onclick="limpiarMoodActual()">
+            <span class="icon">🧹</span> Limpiar Mood Actual
+        </button>
+        <button class="sidebar-link" onclick="limpiarStorage()" style="color:#e05c6a; margin-top:auto;">
+            <span class="icon">🗑️</span> Reiniciar Todo
+        </button>
+    </div>
+
+    <!-- Header -->
+    <header>
+        <div class="btn-hamburger" onclick="toggleNav()" role="button" aria-label="Abrir menú" tabindex="0">☰</div>
+        <h1>Daily URL's</h1>
+        <div style="width:46px"></div>
+    </header>
+
+    <!-- Panel -->
+    <div class="panel-container">
+        <div class="panel-header">
+            <span class="panel-title" id="current-mood-label">Modo: Work</span>
+            <span class="link-counter" id="link-counter">0 activos</span>
+        </div>
+
+        <div id="lista-links" class="lista-links"></div>
+
+        <div class="controles-inferiores">
+            <button class="btn-main" id="btn-agregar" onclick="agregarNuevoLink()">＋ Agregar</button>
+            <button class="btn-main btn-open" id="btn-abrir" onclick="abrirLinksSeleccionados()">🚀 Abrir seleccionados</button>
+        </div>
+    </div>
+
+    <!-- Mood Selector -->
+    <div class="mood-selector" role="list" aria-label="Selecciona tu mood">
+        <div class="mood-card" id="card-relax" onclick="setMood('relax')" role="listitem" tabindex="0" onkeydown="if(event.key==='Enter')setMood('relax')">
+            <div class="mood-card-img-wrap"><img src="flork_musica.jpg" alt="Modo Relax – Flork escuchando música"></div>
+            <p>Relax</p>
+        </div>
+        <div class="mood-card" id="card-work" onclick="setMood('work')" role="listitem" tabindex="0" onkeydown="if(event.key==='Enter')setMood('work')">
+            <div class="mood-card-img-wrap"><img src="flork_llorando_compu.jpg" alt="Modo Work – Flork llorando en la compu"></div>
+            <p>Work</p>
+        </div>
+        <div class="mood-card" id="card-study" onclick="setMood('study')" role="listitem" tabindex="0" onkeydown="if(event.key==='Enter')setMood('study')">
+            <div class="mood-card-img-wrap"><img src="flork_confundido.jpg" alt="Modo Study – Flork confundido"></div>
+            <p>Study</p>
+        </div>
+        <div class="mood-card" id="card-libre" onclick="setMood('libre')" role="listitem" tabindex="0" onkeydown="if(event.key==='Enter')setMood('libre')">
+            <div class="mood-card-img-wrap"><img src="flork_mate.jpg" alt="Modo Libre – Flork con mate"></div>
+            <p>Libre</p>
+        </div>
+    </div>
+
+    <!-- Toast container -->
+    <div id="toast-container" aria-live="polite"></div>
+
+<script>
+    // ========================
+    // DATA
+    // ========================
+    let appData = JSON.parse(localStorage.getItem('flork_links_data')) || {
+        currentMood: 'work',
+        listas: {
+            relax: [ { id: 1, titulo: 'Mi Playlist', url: 'https://spotify.com', checked: true } ],
+            work:  [ { id: 1, titulo: 'Gmail',       url: 'https://mail.google.com', checked: true } ],
+            study: [ { id: 1, titulo: 'Wikipedia',   url: 'https://wikipedia.org', checked: true } ],
+            libre: [ { id: 1, titulo: 'GitHub',      url: 'https://github.com', checked: true } ]
+        }
+    };
+
+    // ========================
+    // RENDER
+    // ========================
+    function renderLista() {
+        const mood = appData.currentMood;
+        const links = appData.listas[mood];
+
+        // Update body class & label
+        document.body.className = 'mood-' + mood;
+        document.getElementById('current-mood-label').innerText = 'Modo: ' + capitalize(mood);
+
+        // Update mood card active states
+        ['relax','work','study','libre'].forEach(m => {
+            document.getElementById('card-' + m).classList.toggle('active', m === mood);
+        });
+
+        // Update counter
+        const activos = links.filter(l => l.checked && l.url.trim()).length;
+        document.getElementById('link-counter').textContent = activos + (activos === 1 ? ' activo' : ' activos');
+
+        // Render list
+        const contenedor = document.getElementById('lista-links');
+        contenedor.innerHTML = '';
+
+        if (links.length === 0) {
+            contenedor.innerHTML = `
+                <div class="empty-state">
+                    <span class="big-emoji">🔗</span>
+                    No hay links en este mood.<br>¡Agregá uno!
+                </div>`;
+            saveData(); return;
+        }
+
+        links.forEach((link, index) => {
+            const div = document.createElement('div');
+            div.className = 'item-link';
+            div.draggable = true;
+            div.dataset.id = link.id;
+            div.dataset.index = index;
+
+            div.innerHTML = `
+                <span class="drag-handle" title="Arrastrar">⠿</span>
+                <input type="checkbox" ${link.checked ? 'checked' : ''}
+                    onchange="updateChecked(${link.id}, this.checked)"
+                    aria-label="Activar ${link.titulo || 'link'}">
+                <input type="text" class="input-doodle input-titulo"
+                    value="${escapeAttr(link.titulo)}" placeholder="Nombre"
+                    oninput="editLinkField(${link.id}, 'titulo', this.value)"
+                    aria-label="Nombre del link">
+                <input type="url" class="input-doodle input-url"
+                    value="${escapeAttr(link.url)}" placeholder="https://..."
+                    oninput="editLinkField(${link.id}, 'url', this.value)"
+                    aria-label="URL del link">
+                <div class="item-actions">
+                    <button class="btn-icon btn-open-single" onclick="abrirLink(${link.id})" title="Abrir este link">🔗</button>
+                    <button class="btn-icon" onclick="borrarLink(${link.id})" title="Borrar link" aria-label="Borrar link">🗑️</button>
+                </div>`;
+
+            // Drag and drop
+            div.addEventListener('dragstart', onDragStart);
+            div.addEventListener('dragover',  onDragOver);
+            div.addEventListener('dragleave', onDragLeave);
+            div.addEventListener('drop',      onDrop);
+            div.addEventListener('dragend',   onDragEnd);
+
+            contenedor.appendChild(div);
+        });
+
+        saveData();
+    }
+
+    function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+    function escapeAttr(str) {
+        return (str || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    // ========================
+    // CRUD
+    // ========================
+    function agregarNuevoLink() {
+        const mood = appData.currentMood;
+        appData.listas[mood].push({ id: Date.now(), titulo: '', url: '', checked: true });
+        renderLista();
+        // Focus last URL input
+        setTimeout(() => {
+            const inputs = document.querySelectorAll('.input-titulo');
+            if (inputs.length) inputs[inputs.length - 1].focus();
+        }, 50);
+    }
+
+    function editLinkField(id, campo, valor) {
+        const mood = appData.currentMood;
+        const item = appData.listas[mood].find(l => l.id === id);
+        if (item) { item[campo] = valor; saveData(); }
+        updateCounter();
+    }
+
+    function updateChecked(id, isChecked) {
+        const mood = appData.currentMood;
+        const item = appData.listas[mood].find(l => l.id === id);
+        if (item) { item.checked = isChecked; saveData(); }
+        updateCounter();
+    }
+
+    function updateCounter() {
+        const mood = appData.currentMood;
+        const activos = appData.listas[mood].filter(l => l.checked && l.url.trim()).length;
+        document.getElementById('link-counter').textContent = activos + (activos === 1 ? ' activo' : ' activos');
+    }
+
+    function borrarLink(id) {
+        const mood = appData.currentMood;
+        appData.listas[mood] = appData.listas[mood].filter(l => l.id !== id);
+        renderLista();
+        showToast('Link eliminado', 'warning');
+    }
+
+    // ========================
+    // OPEN LINKS
+    // ========================
+    function normalizeUrl(url) {
+        url = url.trim();
+        if (!url.startsWith('http')) url = 'https://' + url;
+        return url;
+    }
+
+    function abrirLink(id) {
+        const mood = appData.currentMood;
+        const link = appData.listas[mood].find(l => l.id === id);
+        if (!link || !link.url.trim()) { showToast('Ingresá una URL primero', 'warning'); return; }
+        window.open(normalizeUrl(link.url), '_blank', 'noopener');
+    }
+
+    function abrirLinksSeleccionados() {
+        const mood = appData.currentMood;
+        const seleccionados = appData.listas[mood].filter(l => l.checked && l.url.trim());
+
+        if (!seleccionados.length) {
+            showToast('No hay links válidos seleccionados', 'warning'); return;
+        }
+
+        let bloqueados = 0;
+        seleccionados.forEach(link => {
+            const w = window.open(normalizeUrl(link.url), '_blank', 'noopener');
+            if (!w || w.closed) bloqueados++;
+        });
+
+        if (bloqueados > 0) {
+            showToast('⚠️ Bloqueador de pop-ups activo. Permitilo para este sitio.', 'error');
+        } else {
+            showToast(`🚀 Abriendo ${seleccionados.length} link${seleccionados.length > 1 ? 's' : ''}…`, 'success');
+        }
+    }
+
+    // ========================
+    // MOOD
+    // ========================
+    function setMood(nuevoMood) {
+        if (appData.currentMood === nuevoMood) return;
+        appData.currentMood = nuevoMood;
+        renderLista();
+    }
+
+    // ========================
+    // SIDEBAR / EXTRA ACTIONS
+    // ========================
+    function toggleNav() {
+        const sidebar = document.getElementById('mySidebar');
+        const overlay = document.getElementById('overlay');
+        sidebar.classList.toggle('open');
+        overlay.classList.toggle('active');
+    }
+
+    function seleccionarTodos() {
+        const mood = appData.currentMood;
+        appData.listas[mood].forEach(l => l.checked = true);
+        renderLista(); toggleNav();
+        showToast('Todos seleccionados ✅', 'success');
+    }
+
+    function deseleccionarTodos() {
+        const mood = appData.currentMood;
+        appData.listas[mood].forEach(l => l.checked = false);
+        renderLista(); toggleNav();
+        showToast('Todos deseleccionados ⬜');
+    }
+
+    function limpiarMoodActual() {
+        const mood = appData.currentMood;
+        appData.listas[mood] = [];
+        renderLista(); toggleNav();
+        showToast('Mood "' + capitalize(mood) + '" limpiado 🧹', 'warning');
+    }
+
+    function limpiarStorage() {
+        toggleNav();
+        setTimeout(() => {
+            if (!confirm('¿Querés borrar TODOS los links de todos los moods?')) return;
+            localStorage.removeItem('flork_links_data');
+            appData = {
+                currentMood: 'work',
+                listas: { relax: [], work: [], study: [], libre: [] }
+            };
+            renderLista();
+            showToast('Todo reiniciado 🗑️', 'error');
+        }, 300);
+    }
+
+    function exportarLinks() {
+        const mood = appData.currentMood;
+        const links = appData.listas[mood];
+        if (!links.length) { showToast('No hay links para exportar', 'warning'); toggleNav(); return; }
+        const txt = links.map(l => `${l.titulo || 'Sin nombre'}: ${l.url}`).join('\n');
+        navigator.clipboard.writeText(txt).then(() => {
+            showToast('Links copiados al portapapeles 📋', 'success');
+        }).catch(() => {
+            const area = document.createElement('textarea');
+            area.value = txt; document.body.appendChild(area);
+            area.select(); document.execCommand('copy');
+            document.body.removeChild(area);
+            showToast('Links copiados 📋', 'success');
+        });
+        toggleNav();
+    }
+
+    // ========================
+    // DRAG & DROP
+    // ========================
+    let dragSrcIndex = null;
+
+    function onDragStart(e) {
+        dragSrcIndex = parseInt(this.dataset.index);
+        this.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+    }
+    function onDragOver(e) {
+        e.preventDefault(); e.dataTransfer.dropEffect = 'move';
+        this.classList.add('drag-over');
+    }
+    function onDragLeave() { this.classList.remove('drag-over'); }
+    function onDrop(e) {
+        e.stopPropagation();
+        const targetIndex = parseInt(this.dataset.index);
+        if (dragSrcIndex === null || dragSrcIndex === targetIndex) return;
+        const mood = appData.currentMood;
+        const lista = appData.listas[mood];
+        const [moved] = lista.splice(dragSrcIndex, 1);
+        lista.splice(targetIndex, 0, moved);
+        renderLista();
+    }
+    function onDragEnd() {
+        document.querySelectorAll('.item-link').forEach(el => {
+            el.classList.remove('dragging', 'drag-over');
+        });
+        dragSrcIndex = null;
+    }
+
+    // ========================
+    // SAVE
+    // ========================
+    function saveData() {
+        localStorage.setItem('flork_links_data', JSON.stringify(appData));
+    }
+
+    // ========================
+    // TOAST
+    // ========================
+    function showToast(msg, type = '') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = 'toast' + (type ? ' ' + type : '');
+        toast.textContent = msg;
+        container.appendChild(toast);
+        setTimeout(() => {
+            toast.classList.add('out');
+            toast.addEventListener('animationend', () => toast.remove());
+        }, 3000);
+    }
+
+    // ========================
+    // INIT
+    // ========================
+    renderLista();
+</script>
+</body>
+</html>
