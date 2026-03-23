@@ -3,213 +3,373 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daily URLs - Moods Dinámicos</title>
+    <title>Daily URLs - Panel Doodle 4 Moods</title>
     <link href="https://fonts.googleapis.com/css2?family=Gochi+Hand&display=swap" rel="stylesheet">
     <style>
+        /* Definición de variables CSS para los colores de fondo de cada modo */
         :root {
-            --bg-color: #ffffff;
-            --panel-bg: #ffffff;
-            --accent: #000;
-            --sketch-border: 255px 15px 225px 15px/15px 225px 15px 255px;
+            --bg-color: #f0f0f0; /* Fondo general por defecto */
         }
 
-        /* Colores por Mood */
-        body.mood-relax { --bg-color: #e8f5e9; }
-        body.mood-work { --bg-color: #ffebee; }
-        body.mood-study { --bg-color: #e3f2fd; }
-        body.mood-libre { --bg-color: #f5f5f5; }
+        /* Clases para cambiar el fondo según el modo seleccionado */
+        body.mood-relax { --bg-color: #e3f2fd; } /* Azul claro */
+        body.mood-work { --bg-color: #ffebee; }  /* Rosa claro */
+        body.mood-study { --bg-color: #f3e5f5; } /* Violeta claro */
+        body.mood-libre { --bg-color: #e8f5e9; } /* Verde claro */
 
+        /* Estilos generales del cuerpo */
         body {
-            font-family: 'Gochi Hand', cursive;
-            background-color: var(--bg-color);
-            transition: 0.3s;
+            font-family: 'Gochi Hand', cursive; /* Fuente doodle */
+            background-color: var(--bg-color); /* Color de fondo dinámico */
+            transition: background-color 0.3s ease; /* Transición suave */
+            padding: 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 20px;
+            min-height: 100vh;
             margin: 0;
         }
 
-        header { width: 100%; max-width: 600px; display: flex; align-items: center; justify-content: space-between; }
-        
-        .panel {
-            background: #fff;
-            border: 3px solid var(--accent);
-            border-radius: var(--sketch-border);
+        /* Estilos del encabezado */
+        header {
             width: 100%;
             max-width: 600px;
-            min-height: 400px;
-            padding: 25px;
-            box-sizing: border-box;
-            box-shadow: 8px 8px 0px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        .mood-indicator { text-transform: uppercase; font-size: 1.2rem; margin-bottom: 10px; color: #666; }
+        .menu-hamburguesa {
+            font-size: 30px;
+            cursor: pointer;
+            padding: 10px;
+        }
 
-        .fila-link { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; border-bottom: 1px dashed #ddd; padding-bottom: 5px; }
-        
-        input[type="text"] {
+        h1 { font-size: 2.5rem; margin: 10px 0; }
+
+        /* Estilos del Panel Central de URLs */
+        .panel-container {
+            background: white; /* Panel siempre blanco */
+            border: 3px solid #000; /* Borde negro grueso */
+            border-radius: 255px 15px 225px 15px/15px 225px 15px 255px; /* Efecto "sketch" de borde irregular */
+            width: 100%;
+            max-width: 600px;
+            min-height: 350px;
+            padding: 30px;
+            box-shadow: 8px 8px 0px rgba(0,0,0,0.05); /* Sombra suave */
+            position: relative;
+        }
+
+        .mood-indicator {
+            position: absolute;
+            top: 15px;
+            right: 25px;
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            color: #666;
+        }
+
+        .lista-links { margin-bottom: 20px; }
+
+        .item-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px dashed #ccc; /* Línea discontinua */
+        }
+
+        input[type="checkbox"] {
+            transform: scale(1.5);
+            cursor: pointer;
+        }
+
+        /* Estilos de los inputs con aspecto doodle */
+        .input-doodle {
             font-family: 'Gochi Hand';
-            border: none;
-            border-bottom: 2px solid #000;
-            outline: none;
-            background: transparent;
             font-size: 1.1rem;
+            border: none;
+            border-bottom: 2px solid #333; /* Solo borde inferior */
+            outline: none;
+            padding: 2px 5px;
+            background: transparent;
         }
-        .in-titulo { width: 30%; }
-        .in-url { width: 50%; color: #555; }
 
-        .btn {
+        .input-titulo { width: 30%; font-weight: bold; }
+        .input-url { width: 55%; color: #666; }
+
+        .btn-delete {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            opacity: 0.6;
+        }
+        .btn-delete:hover { opacity: 1; }
+
+        /* Controles inferiores del panel */
+        .controles-inferiores {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        .btn-main {
             font-family: 'Gochi Hand';
+            font-size: 1.2rem;
+            padding: 8px 15px;
             cursor: pointer;
             border: 2px solid #000;
             background: #fff;
-            border-radius: var(--sketch-border);
-            padding: 5px 15px;
-            font-size: 1.1rem;
+            border-radius: 255px 15px 225px 15px/15px 225px 15px 255px; /* Borde sketch */
+            transition: transform 0.1s;
         }
-        .btn-open { background: #000; color: #fff; margin-left: 10px; }
 
-        .footer-moods { display: flex; gap: 30px; margin-top: 40px; justify-content: center; flex-wrap: wrap; }
-        .mood-btn { text-align: center; cursor: pointer; width: 90px; transition: 0.2s; }
-        .mood-btn:hover { transform: scale(1.1); }
-        .mood-btn img { width: 100%; height: auto; border-radius: 5px; }
-        
-        /* Sidebar */
-        .sidebar { height: 100%; width: 0; position: fixed; z-index: 10; top: 0; left: 0; background: #000; color: #fff; overflow-x: hidden; transition: 0.4s; padding-top: 60px; }
-        .sidebar a { padding: 10px 30px; text-decoration: none; color: #ccc; display: block; font-size: 1.5rem; }
-        .sidebar .close { position: absolute; top: 10px; right: 20px; font-size: 2rem; cursor: pointer; }
+        .btn-main:active { transform: scale(0.95); } /* Efecto de pulsado */
+        .btn-open { background: #000; color: #fff; } /* Botón "Abrir" invertido */
 
+        /* Estilos del Selector de Moods (4 fotos) */
+        .mood-selector {
+            display: flex;
+            gap: 30px;
+            margin-top: 50px;
+            flex-wrap: wrap; /* Permitir que se envuelvan si no hay espacio */
+            justify-content: center;
+        }
+
+        .mood-card {
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+            width: 100px;
+        }
+
+        .mood-card:hover { transform: translateY(-10px); } /* Levantar al pasar el ratón */
+
+        .mood-card img {
+            width: 100%;
+            height: auto;
+            border-radius: 10px;
+        }
+
+        .mood-card p { margin-top: 5px; font-size: 1.2rem; }
+
+        /* Estilos del Menú Lateral (Hamburguesa) */
+        .sidebar {
+            height: 100%;
+            width: 0;
+            position: fixed;
+            z-index: 10;
+            top: 0;
+            left: 0;
+            background-color: #111; /* Negro profundo */
+            color: white;
+            overflow-x: hidden;
+            transition: 0.4s;
+            padding-top: 60px;
+        }
+
+        .sidebar a {
+            padding: 15px 25px;
+            text-decoration: none;
+            font-size: 20px;
+            color: #818181;
+            display: block;
+        }
+
+        .sidebar a:hover { color: #f1f1f1; }
+
+        .sidebar .closebtn {
+            position: absolute;
+            top: 0;
+            right: 25px;
+            font-size: 36px;
+        }
     </style>
 </head>
-<body class="mood-libre">
-
-    <div id="sidebar" class="sidebar">
-        <span class="close" onclick="closeMenu()">×</span>
-        <a href="#" onclick="cambiarMood('libre')">Panel Central (Libre)</a>
+<body class="mood-work"> <div id="mySidebar" class="sidebar">
+        <a href="javascript:void(0)" class="closebtn" onclick="toggleNav()">×</a>
+        <h2 style="padding-left: 25px;">Configuración</h2>
         <a href="#" onclick="limpiarStorage()">Reiniciar Todo</a>
+        <a href="#" onclick="toggleNav()">Cerrar Menú</a>
     </div>
 
     <header>
-        <div style="font-size: 2rem; cursor: pointer;" onclick="openMenu()">☰</div>
-        <h1 id="main-title">Daily Url's</h1>
-        <div style="width: 40px;"></div>
-    </header>
+        <div class="menu-hamburguesa" onclick="toggleNav()">☰</div>
+        <h1>Daily Url's</h1>
+        <div style="width: 40px;"></div> </header>
 
-    <div class="panel">
-        <div class="mood-indicator" id="mood-label">Modo: Libre</div>
-        <div id="lista-links"></div>
+    <div class="panel-container">
+        <span class="mood-indicator" id="current-mood-label">Modo: Work</span>
         
-        <div style="margin-top: 20px; display: flex; justify-content: space-between;">
-            <button class="btn" onclick="agregarLink()">+ Agregar</button>
-            <button class="btn btn-open" onclick="abrirSeleccionados()">🚀 Abrir Checkeados</button>
+        <div id="lista-links" class="lista-links">
+            </div>
+
+        <div class="controles-inferiores">
+            <button class="btn-main" onclick="agregarNuevoLink()">+ Agregar</button>
+            <button class="btn-main btn-open" onclick="abrirLinksSeleccionados()">🚀 Abrir</button>
         </div>
     </div>
 
-    <div class="footer-moods">
-        <div class="mood-btn" onclick="cambiarMood('relax')">
+    <div class="mood-selector">
+        <div class="mood-card" onclick="setMood('relax')">
             <img src="flork_musica.jpg" alt="Relax">
             <p>Relax</p>
         </div>
-        <div class="mood-btn" onclick="cambiarMood('work')">
+        <div class="mood-card" onclick="setMood('work')">
             <img src="flork_llorando_compu.jpg" alt="Work">
             <p>Work</p>
         </div>
-        <div class="mood-btn" onclick="cambiarMood('study')">
+        <div class="mood-card" onclick="setMood('study')">
             <img src="flork_confundido.jpg" alt="Study">
             <p>Study</p>
+        </div>
+        <div class="mood-card" onclick="setMood('libre')">
+            <img src="flork_mate.png" alt="Libre">
+            <p>Libre</p>
         </div>
     </div>
 
     <script>
-        // Estructura de datos: un objeto que contiene listas para cada mood
-        let datosApp = JSON.parse(localStorage.getItem('flork_data')) || {
-            currentMood: 'libre',
+        // Lógica de JavaScript para gestionar los datos y la interfaz
+
+        // Cargar datos existentes de LocalStorage o usar listas vacías por defecto
+        let appData = JSON.parse(localStorage.getItem('flork_links_data')) || {
+            currentMood: 'work', // Modo por defecto
             listas: {
-                libre: [],
-                relax: [],
-                work: [],
-                study: []
+                relax: [ { id: 1, titulo: 'Mi Playlist', url: 'https://spotify.com', checked: true } ],
+                work: [ { id: 1, titulo: 'Gmail', url: 'https://mail.google.com', checked: true } ],
+                study: [ { id: 1, titulo: 'Wikipedia', url: 'https://wikipedia.org', checked: true } ],
+                libre: [ { id: 1, titulo: 'Mate & Code', url: 'https://github.com', checked: true } ]
             }
         };
 
-        function render() {
-            const mood = datosApp.currentMood;
+        // Función principal para dibujar la lista según el modo actual
+        function renderLista() {
+            const mood = appData.currentMood;
+            
+            // Actualizar la interfaz visual (clase del body e indicador)
             document.body.className = 'mood-' + mood;
-            document.getElementById('mood-label').innerText = 'Modo: ' + mood;
+            document.getElementById('current-mood-label').innerText = 'Modo: ' + mood;
             
             const contenedor = document.getElementById('lista-links');
-            contenedor.innerHTML = '';
+            contenedor.innerHTML = ''; // Limpiar lista actual
 
-            datosApp.listas[mood].forEach((item, index) => {
+            // Recorrer los links del modo actual y generar el HTML
+            appData.listas[mood].forEach(link => {
                 const div = document.createElement('div');
-                div.className = 'fila-link';
+                div.className = 'item-link';
                 div.innerHTML = `
-                    <input type="checkbox" ${item.checked ? 'checked' : ''} onchange="updateItem(${index}, 'checked', this.checked)">
-                    <input type="text" class="in-titulo" placeholder="Título" value="${item.titulo}" oninput="updateItem(${index}, 'titulo', this.value)">
-                    <input type="text" class="in-url" placeholder="URL (ej: google.com)" value="${item.url}" oninput="updateItem(${index}, 'url', this.value)">
-                    <span style="cursor:pointer" onclick="eliminarLink(${index})">🗑️</span>
+                    <input type="checkbox" ${link.checked ? 'checked' : ''} onchange="updateChecked(${link.id}, this.checked)">
+                    <input type="text" class="input-doodle input-titulo" value="${link.titulo}" placeholder="Nombre" oninput="editLinkField(${link.id}, 'titulo', this.value)">
+                    <input type="text" class="input-doodle input-url" value="${link.url}" placeholder="URL" oninput="editLinkField(${link.id}, 'url', this.value)">
+                    <button class="btn-delete" onclick="borrarLink(${link.id})">🗑️</button>
                 `;
                 contenedor.appendChild(div);
             });
-            save();
-        }
-
-        function agregarLink() {
-            datosApp.listas[datosApp.currentMood].push({ titulo: '', url: '', checked: true });
-            render();
-        }
-
-        function updateItem(index, campo, valor) {
-            datosApp.listas[datosApp.currentMood][index][campo] = valor;
-            save();
-        }
-
-        function eliminarLink(index) {
-            datosApp.listas[datosApp.currentMood].splice(index, 1);
-            render();
-        }
-
-        function cambiarMood(nuevoMood) {
-            datosApp.currentMood = nuevoMood;
-            render();
-            closeMenu();
-        }
-
-        function abrirSeleccionados() {
-            const linksParaAbrir = datosApp.listas[datosApp.currentMood].filter(l => l.checked && l.url);
             
-            if (linksParaAbrir.length === 0) return alert("No hay links seleccionados o con URL válida.");
+            // Guardar cambios en el almacenamiento local
+            saveData();
+        }
 
-            linksParaAbrir.forEach(link => {
-                let url = link.url.trim();
-                if (!url.match(/^https?:\/\//i)) {
+        // --- Funciones para gestionar links (CRUD) ---
+
+        function agregarNuevoLink() {
+            const mood = appData.currentMood;
+            const nuevoLink = {
+                id: Date.now(), // ID único basado en el tiempo
+                titulo: '',
+                url: '',
+                checked: true // Activado por defecto
+            };
+            appData.listas[mood].push(nuevoLink);
+            renderLista();
+        }
+
+        function editLinkField(id, campo, valor) {
+            const mood = appData.currentMood;
+            const index = appData.listas[mood].findIndex(l => l.id === id);
+            if (index !== -1) {
+                appData.listas[mood][index][campo] = valor;
+                saveData(); // Guardar solo los datos, no re-dibujar para no perder foco del input
+            }
+        }
+
+        function updateChecked(id, isChecked) {
+            const mood = appData.currentMood;
+            const index = appData.listas[mood].findIndex(l => l.id === id);
+            if (index !== -1) {
+                appData.listas[mood][index].checked = isChecked;
+                saveData();
+            }
+        }
+
+        function borrarLink(id) {
+            const mood = appData.currentMood;
+            appData.listas[mood] = appData.listas[mood].filter(l => l.id !== id);
+            renderLista();
+        }
+
+        // --- Funciones de navegación y acciones ---
+
+        function setMood(nuevoMood) {
+            appData.currentMood = nuevoMood;
+            renderLista();
+        }
+
+        function abrirLinksSeleccionados() {
+            const mood = appData.currentMood;
+            // Filtrar solo los links activados y que tengan una URL
+            const seleccionados = appData.listas[mood].filter(l => l.checked && l.url.trim() !== '');
+            
+            if (seleccionados.length === 0) {
+                return alert("No hay links válidos seleccionados.");
+            }
+            
+            seleccionados.forEach(link => {
+                let url = link.url;
+                // Asegurar que la URL tenga protocolo http/https
+                if (!url.startsWith('http')) {
                     url = 'https://' + url;
                 }
-                // Intento de apertura
-                const win = window.open(url, '_blank');
-                if (!win) {
-                    alert("¡Atención! Tu navegador bloqueó las pestañas. Por favor, permití los 'pop-ups' para este sitio.");
+                // Intento de apertura. El navegador puede bloquear esto.
+                const newWindow = window.open(url, '_blank');
+                
+                // Si la ventana no abre, alertar al usuario sobre los pop-ups
+                if (!newWindow || newWindow.closed || typeof newWindow.closed=='undefined') {
+                    alert("¡Atención! Tu navegador ha bloqueado las pestañas múltiples. Por favor, permite los 'pop-ups' para este sitio.");
                 }
             });
         }
 
-        function save() {
-            localStorage.setItem('flork_data', JSON.stringify(datosApp));
+        function saveData() {
+            localStorage.setItem('flork_links_data', JSON.stringify(appData));
         }
 
-        function openMenu() { document.getElementById("sidebar").style.width = "250px"; }
-        function closeMenu() { document.getElementById("sidebar").style.width = "0"; }
+        // --- Lógica del Menú Sidebar ---
+
+        function toggleNav() {
+            const sidebar = document.getElementById("mySidebar");
+            // Usar '0px' como valor de cierre por defecto
+            sidebar.style.width = (sidebar.style.width === "250px") ? "0px" : "250px";
+        }
 
         function limpiarStorage() {
-            if(confirm("¿Borrar todos los links de todos los modos?")) {
-                localStorage.clear();
-                location.reload();
+            if(confirm("¿Estás seguro de que quieres borrar todos los links de todos los modos?")) {
+                localStorage.removeItem('flork_links_data');
+                // Recargar con datos por defecto
+                appData = {
+                    currentMood: 'work',
+                    listas: { relax: [], work: [], study: [], libre: [] }
+                };
+                renderLista();
+                toggleNav();
             }
         }
 
-        // Carga inicial
-        render();
+        // --- Carga Inicial ---
+        renderLista();
     </script>
 </body>
 </html>
