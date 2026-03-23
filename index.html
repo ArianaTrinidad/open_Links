@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <title>Mi Panel</title>
 
-<!-- Fuente manuscrita -->
 <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Patrick+Hand&display=swap" rel="stylesheet">
 
 <style>
@@ -16,7 +15,6 @@ body {
   margin: 0;
 }
 
-/* ✨ TÍTULO */
 h1 {
   text-align: center;
   font-family: 'Permanent Marker', cursive;
@@ -25,7 +23,6 @@ h1 {
   letter-spacing: 2px;
 }
 
-/* BOTONES */
 .btn {
   border: 2px solid black;
   background: white;
@@ -34,7 +31,6 @@ h1 {
   font-family: 'Patrick Hand', cursive;
 }
 
-/* CONTENEDOR CATEGORÍA */
 .categoria {
   display: flex;
   gap: 20px;
@@ -43,15 +39,13 @@ h1 {
   padding: 20px;
   margin-top: 20px;
   align-items: center;
-  flex-wrap: wrap; /* 🔥 clave responsive */
+  flex-wrap: wrap;
 }
 
-/* IMAGEN */
 .categoria img {
   width: 120px;
 }
 
-/* LINKS */
 .links {
   display: flex;
   flex-wrap: wrap;
@@ -65,7 +59,6 @@ h1 {
   background: white;
 }
 
-/* EDITOR */
 #editor {
   margin-top: 30px;
   border: 2px dashed black;
@@ -81,12 +74,8 @@ input {
   font-family: 'Patrick Hand', cursive;
 }
 
-/* 📱 RESPONSIVE */
 @media (max-width: 600px) {
-
-  h1 {
-    font-size: 40px;
-  }
+  h1 { font-size: 40px; }
 
   .categoria {
     flex-direction: column;
@@ -96,7 +85,6 @@ input {
   .categoria img {
     width: 80px;
   }
-
 }
 
 </style>
@@ -115,7 +103,7 @@ input {
 
   <h3>Nueva categoría</h3>
   <input id="nuevaCat" placeholder="Nombre categoría">
-  <input id="nuevaImg" placeholder="Nombre imagen (ej: flork.jpg)">
+  <input id="nuevaImg" placeholder="URL imagen (https://...)">
   <button class="btn" onclick="crearCategoria()">+ Crear</button>
 
   <br><br>
@@ -126,15 +114,15 @@ input {
 
 let data = JSON.parse(localStorage.getItem("data")) || {
   "RELAX": {
-    img: "flork_musica.jpg",
+    img: "https://i.imgur.com/8Km9tLL.png",
     links: ["https://youtube.com"]
   },
   "STUDY TIME": {
-    img: "flork_confundido.jpg",
+    img: "https://i.imgur.com/3GvwNBf.png",
     links: ["https://google.com"]
   },
   "F*CKING WORK": {
-    img: "flork_llorando_compu.jpg",
+    img: "https://i.imgur.com/Z7AzH2c.png",
     links: ["https://gmail.com"]
   }
 };
@@ -150,7 +138,7 @@ function render() {
     div.className = "categoria";
 
     div.innerHTML = `
-      <img src="${c.img}">
+      ${c.img ? `<img src="${c.img}" onerror="this.style.display='none'">` : ""}
       <div>
         <h2>${cat}</h2>
         <button class="btn" onclick="abrirGrupo('${cat}')">Abrir todo</button>
@@ -187,7 +175,7 @@ function renderEditor() {
 
     div.innerHTML = `
       <h3>${cat}</h3>
-      <input value="${c.img}" onchange="data['${cat}'].img=this.value">
+      <input placeholder="URL imagen (https://...)" value="${c.img}" onchange="data['${cat}'].img=this.value">
 
       ${c.links.map((link, i) =>
         `<input value="${link}" onchange="data['${cat}'].links[${i}] = this.value">`
