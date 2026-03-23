@@ -1,3 +1,5 @@
+<!DOCTYPE html>
+<html lang="es">
 <head>
 <meta charset="UTF-8">
 <title>Mi Panel</title>
@@ -99,3 +101,140 @@ input {
 
 </style>
 </head>
+
+<body>
+
+<h1>MI PANEL</h1>
+<button class="btn" onclick="toggleEditor()">⚙ EDITAR</button>
+
+<div id="contenedor"></div>
+
+<div id="editor" style="display:none;">
+  <h2>Editor</h2>
+  <div id="editorContenido"></div>
+
+  <h3>Nueva categoría</h3>
+  <input id="nuevaCat" placeholder="Nombre categoría">
+  <input id="nuevaImg" placeholder="Nombre imagen (ej: flork.jpg)">
+  <button class="btn" onclick="crearCategoria()">+ Crear</button>
+
+  <br><br>
+  <button class="btn" onclick="guardar()">💾 Guardar</button>
+</div>
+
+<script>
+
+let data = JSON.parse(localStorage.getItem("data")) || {
+  "RELAX": {
+    img: "flork_musica.jpg",
+    links: ["https://youtube.com"]
+  },
+  "STUDY TIME": {
+    img: "flork_confundido.jpg",
+    links: ["https://google.com"]
+  },
+  "F*CKING WORK": {
+    img: "flork_llorando_compu.jpg",
+    links: ["https://gmail.com"]
+  }
+};
+
+function render() {
+  const contenedor = document.getElementById("contenedor");
+  contenedor.innerHTML = "";
+
+  Object.keys(data).forEach(cat => {
+    let c = data[cat];
+
+    let div = document.createElement("div");
+    div.className = "categoria";
+
+    div.innerHTML = `
+      <img src="${c.img}">
+      <div>
+        <h2>${cat}</h2>
+        <button class="btn" onclick="abrirGrupo('${cat}')">Abrir todo</button>
+        <div class="links">
+          ${c.links.map(link => 
+            `<div class="link-btn" onclick="window.open('${link}')">${link}</div>`
+          ).join("")}
+        </div>
+      </div>
+    `;
+
+    contenedor.appendChild(div);
+  });
+}
+
+function abrirGrupo(cat) {
+  data[cat].links.forEach(link => window.open(link));
+}
+
+function toggleEditor() {
+  const editor = document.getElementById("editor");
+  editor.style.display = editor.style.display === "none" ? "block" : "none";
+  renderEditor();
+}
+
+function renderEditor() {
+  const cont = document.getElementById("editorContenido");
+  cont.innerHTML = "";
+
+  Object.keys(data).forEach(cat => {
+    let c = data[cat];
+
+    let div = document.createElement("div");
+
+    div.innerHTML = `
+      <h3>${cat}</h3>
+      <input value="${c.img}" onchange="data['${cat}'].img=this.value">
+
+      ${c.links.map((link, i) =>
+        `<input value="${link}" onchange="data['${cat}'].links[${i}] = this.value">`
+      ).join("")}
+
+      <button class="btn" onclick="agregarLink('${cat}')">+ Link</button>
+      <button class="btn" onclick="eliminarCategoria('${cat}')">🗑 Eliminar categoría</button>
+      <hr>
+    `;
+
+    cont.appendChild(div);
+  });
+}
+
+function agregarLink(cat) {
+  data[cat].links.push("");
+  renderEditor();
+}
+
+function crearCategoria() {
+  let nombre = document.getElementById("nuevaCat").value;
+  let img = document.getElementById("nuevaImg").value;
+
+  if (!nombre) return alert("Poné un nombre");
+
+  data[nombre] = {
+    img: img || "",
+    links: []
+  };
+
+  renderEditor();
+}
+
+function eliminarCategoria(cat) {
+  delete data[cat];
+  renderEditor();
+}
+
+function guardar() {
+  localStorage.setItem("data", JSON.stringify(data));
+  alert("Guardado ✅");
+  render();
+}
+
+render();
+
+</script>
+
+</body>
+</html>
