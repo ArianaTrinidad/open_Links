@@ -15,7 +15,7 @@
         body.mood-relax { --bg-color: #e3f2fd; } /* Azul claro */
         body.mood-work { --bg-color: #ffebee; }  /* Rosa claro */
         body.mood-study { --bg-color: #f3e5f5; } /* Violeta claro */
-        body.mood-libre { --bg-color: #e8f5e9; } /* Verde claro */
+        body.mood-extras { --bg-color: #e8f5e9; } /* Verde claro */
 
         /* Estilos generales del cuerpo */
         body {
@@ -225,9 +225,9 @@
             <img src="flork_confundido.jpg" alt="Study">
             <p>Study</p>
         </div>
-        <div class="mood-card" onclick="setMood('libre')">
+        <div class="mood-card" onclick="setMood('extras')">
             <img src="flork_mate.jpg" alt="Anothers">
-            <p>Libre</p>
+            <p>Extras</p>
         </div>
     </div>
 
@@ -241,7 +241,7 @@
                 relax: [ { id: 1, titulo: 'Mi Playlist', url: 'https://spotify.com', checked: true } ],
                 work: [ { id: 1, titulo: 'Gmail', url: 'https://mail.google.com', checked: true } ],
                 study: [ { id: 1, titulo: 'Wikipedia', url: 'https://wikipedia.org', checked: true } ],
-                libre: [ { id: 1, titulo: 'Mate & Code', url: 'https://github.com', checked: true } ]
+                extras: [ { id: 1, titulo: 'Mate & Code', url: 'https://github.com', checked: true } ]
             }
         };
 
@@ -361,7 +361,7 @@
                 // Recargar con datos por defecto
                 appData = {
                     currentMood: 'work',
-                    listas: { relax: [], work: [], study: [], libre: [] }
+                    listas: { relax: [], work: [], study: [], extras: [] }
                 };
                 renderLista();
                 toggleNav();
